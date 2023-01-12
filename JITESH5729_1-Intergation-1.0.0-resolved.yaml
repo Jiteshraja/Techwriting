@@ -1,0 +1,784 @@
+---
+openapi: 3.0.0
+info:
+  title: DriverApp API
+  description: App intergation API.
+  contact: {}
+  license:
+    name: WellRyde Driverapp intergation API
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/JITESH5729_1/Intergation/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: About Events
+  description: |
+    # API Change Log
+
+    | Version | Date | Changes | Comments |
+    | --- | --- | --- | --- |
+    | 1.0.0 | Dec 4th 2022 | Initial Version |
+
+    # Terminology
+    The document assumes native WellRyde field-naming conventions. WellRyd can be used in a wide variety of people transportation applications and the field names represented here may not directly represent the use of these fields in your specific application.
+
+
+    | Document Terminology | WellRyde Use | Associated Industry Terminology |
+    | --- | ---| --- |
+    |Stop     |Location for the pickup or the dropoff.|Rider location for a pick-up & drop-off|
+    |Trip     |A combination of a pickup stop and its associated drop off stop assigned to a driver.|Work schedule, Route, taxi path,service run ,Leg|
+    |Driver   |Represents the personnel deployed for the trip.|Driver|
+    |Comments |Set of instructions sent to the driver.Comments can be associated with the trip or the stop.Note: Only specific comment types are sent to the driver.|Special instructions, pick up or drop off, Customer request.|
+    |Signature|Refers to the signature by the Rider after a pick up or drop off is complete|Pickup tracking number|
+
+
+    # Event Codes
+
+    ## Events
+
+    | Event Code | Name | Description |
+    | --- | ---| --- |
+    | 7064 | Route-Inprogress (Route Start) | Event to indicate trip in progress |
+    | 7302 | Trip Enroute to PickUp | Event to indicate when driver enroute to pick up a rider |
+    | 7303 | Pick Up / Drop-off Stop Arrival | Event to indicate when driver arrived at the stop |
+    | 7304 | Pick Up / Drop-off Stop Departure | Event to indicate when driver departed a stop |
+    | 7305 | Signature Capture | Event to indicate when the rider signature was captured |
+    | 7313 | DO Stop Arrival | Event to indicate when Trip is Completed/ drop off stop arrival |
+    | 7315  | DO Stop Confirmation | Event to indicate when the drop off stop is confirmed |
+    | 7316 | DO Signature Confirmation | Event to indicate when Trip drop off signatured is captured |
+    | 7310 | PU Stop Confirmation | Event to indicate Stop confirmationtrip |
+    | 7314 | DO Stop Departure | Event to indicate trip drop off stope departure |
+paths:
+  /portal/mamservice/{bundleId}:
+    post:
+      tags:
+      - Event API
+      summary: Events are triggered by actions in wellRyde app or portal
+      description: Event messages contain event information pertaining to the trigger action. current state of the route(Route-Inprogress for the start)
+      parameters:
+      - name: bundleId
+        in: path
+        description: bundleId
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Route-Inprogress for the start.
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/DIXml'
+            examples:
+              EventRouteStart:
+                $ref: '#/components/examples/EventRouteStart'
+              EventDriverEnRoutePUStop:
+                $ref: '#/components/examples/EventDriverEnRoutePUStop'
+              EventPUStopArrival:
+                $ref: '#/components/examples/EventPUStopArrival'
+              EventPuSignatureConfirmation:
+                $ref: '#/components/examples/EventPuSignatureConfirmation'
+              EventPUStopDeparture:
+                $ref: '#/components/examples/EventPUStopDeparture'
+              EventDOStopArrival:
+                $ref: '#/components/examples/EventDOStopArrival'
+              EventDOStopConfirmation:
+                $ref: '#/components/examples/EventDOStopConfirmation'
+              EventDOSignatureConfirmation:
+                $ref: '#/components/examples/EventDOSignatureConfirmation'
+              EventDOStopDeparture:
+                $ref: '#/components/examples/EventDOStopDeparture'
+        required: true
+      responses:
+        "200":
+          description: Successfully processed the trips
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        "400":
+          description: Bad request; request contains invalid data
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/FailureResponse'
+        "401":
+          description: You are not authorized to access the resource
+          content: {}
+        "404":
+          description: The resource you were trying to reach is not found
+          content: {}
+components:
+  schemas:
+    DIXml:
+      required:
+      - Header
+      - Message
+      type: object
+      properties:
+        Header:
+          $ref: '#/components/schemas/Header'
+        Message:
+          $ref: '#/components/schemas/RequestMessage'
+    Header:
+      required:
+      - BundleId
+      - BundleVersion
+      - DeviceId
+      - DeviceOS
+      - DeviceType
+      - LastSyncDate
+      type: object
+      properties:
+        BundleId:
+          type: string
+          description: BundleId is current application identifier/package name.
+          example: com.modivcare.wellryde
+        BundleVersion:
+          type: string
+          description: BundleVersion is current version of the application.
+          example: 5.3.26
+        DeviceType:
+          type: string
+          description: DeviceType specifies hardware configuration details.
+          example: Android
+        DeviceOS:
+          type: string
+          description: DeviceOS refers to operating system version of the devices.
+          example: "11"
+        DeviceId:
+          type: string
+          description: DeviceId is unique id to communication with server side to device, and to unique identify the device.
+          example: ee043d33-3383-44f0-b3ac-b4e33618b4ab
+        LastSyncDate:
+          type: string
+          description: LastSyncDate.
+          example: RequestDate yyyy-MM-dd'T'HH:mm:ss.SSS'Z format.
+    RequestMessage:
+      required:
+      - Request
+      type: object
+      properties:
+        Request:
+          $ref: '#/components/schemas/Request'
+    Request:
+      required:
+      - Command
+      - CompanyCode
+      - EventSync
+      - RequestDate
+      type: object
+      properties:
+        RequestDate:
+          type: string
+          description: RequestDate yyyy-MM-dd'T'HH:mm:ss.SSS'Z format.
+          example: 2022-05-24T06-29-01Z
+        Command:
+          type: string
+          description: Command.
+          example: EventSync
+        CompanyCode:
+          type: string
+          description: CompanyCode.
+          example: CHUATBP
+        EventSync:
+          $ref: '#/components/schemas/EventSync'
+    EventSync:
+      required:
+      - EventGroups
+      type: object
+      properties:
+        EventGroups:
+          $ref: '#/components/schemas/EventGroups'
+    EventGroups:
+      required:
+      - EventGroups
+      type: object
+      properties:
+        EventGroup:
+          $ref: '#/components/schemas/EventGroup'
+    EventGroup:
+      required:
+      - Events
+      - SessionToken
+      type: object
+      properties:
+        SessionToken:
+          type: string
+          description: SessionToken to validate app.
+          example: 92A0CTHHJQ7VC1S7TFTV
+        Events:
+          $ref: '#/components/schemas/Events'
+    Events:
+      required:
+      - Event
+      type: object
+      properties:
+        Event:
+          $ref: '#/components/schemas/Event'
+    Event:
+      required:
+      - EventCode
+      - EventTime
+      - LoadId
+      - RouteId
+      type: object
+      properties:
+        EventCode:
+          type: string
+          description: EventCode of the trip.
+          example: "7064"
+        LoadId:
+          type: string
+          description: LoadId of the trip.
+          example: 628c7afe0242ef0001462250
+        RouteId:
+          type: string
+          description: RouteId of the trip.
+          example: 628c7afe0242ef0001462250
+        StopId:
+          type: string
+          description: RouteId of the trip.
+          example: 628c7afe0242ef0001462250
+        EventTime:
+          type: string
+          description: EventTime yyyy-MM-dd'T'HH:mm:ss.SSS'Z format.
+          example: 2022-05-24T06-29-01Z
+        InStopRegion:
+          type: boolean
+          description: InStopRegion
+          example: false
+        Location:
+          $ref: '#/components/schemas/Location'
+        StopDocument:
+          $ref: '#/components/schemas/StopDocument'
+    Location:
+      required:
+      - Accuracy
+      - Altitude
+      - Course
+      - InRegion
+      - Latitude
+      - Longitude
+      - Mileage
+      - RegionLatitude
+      - RegionLongitude
+      - RegionRadius
+      - Speed
+      type: object
+      properties:
+        Latitude:
+          type: number
+          description: Latitude value
+          format: double
+          example: 21.765311
+        Longitude:
+          type: number
+          description: Longitude value
+          format: double
+          example: 21.765311
+        Accuracy:
+          type: number
+          description: Accuracy of the trip.
+          format: double
+          example: 9.9350004196167
+        Altitude:
+          type: number
+          description: Altitude of the trip.
+          format: double
+          example: 97.9901123046875
+        Speed:
+          type: number
+          description: Altitude of the trip.
+          format: double
+          example: 0.01013992726802826
+        Course:
+          type: number
+          description: Course of the trip.
+          format: double
+          example: 205.51161193847656
+        RegionLatitude:
+          type: number
+          description: RegionLatitude of the trip.
+          format: double
+          example: 0
+        RegionLongitude:
+          type: integer
+          description: RegionLongitude of the trip.
+          example: 0
+        RegionRadius:
+          type: integer
+          description: RegionRadius of the trip.
+          example: 0
+        InRegion:
+          type: boolean
+          description: inregion status.
+          example: true
+        ReportedTime:
+          type: string
+          description: EventTime yyyy-MM-dd'T'HH:mm:ss.SSS'Z format.
+          example: 2022-05-24T06-29-01Z
+        Mileage:
+          type: number
+          description: RegionRadius of the trip.
+          format: double
+          example: 17074.1732
+    EventGuid:
+      type: object
+      description: Events guide , will be availble if events are there.
+    StopDocument:
+      required:
+      - DocumentData
+      - DocumentDispositionType
+      - DocumentExtType
+      - DocumentName
+      - DocumentType
+      - Reference
+      - SignedBy
+      type: object
+      properties:
+        DocumentName:
+          type: string
+          description: Name of the document.
+          example: DOE, JOHN
+        DocumentType:
+          type: string
+          description: Type of the document.
+          example: "1"
+        DocumentExtType:
+          type: string
+          description: Exetension Type of the document.
+          example: png
+        DocumentData:
+          type: string
+          description: DocumentData of the document.
+          example: png
+        DocumentDispositionType:
+          type: string
+          description: DocumentDispositionType.
+          example: "11"
+        SignedBy:
+          type: string
+          description: Document Signed by.
+          example: DOE, JOHN
+        Reference:
+          type: string
+          description: Reference of the document.
+          example: 98d2d139-6769-479f-a369-15fa1785ee65
+    ResponseMessage:
+      required:
+      - Response
+      type: object
+      properties:
+        Response:
+          $ref: '#/components/schemas/SuccessResponse'
+    SuccessResponse:
+      required:
+      - Command
+      - EventSyncResponse
+      type: object
+      properties:
+        Command:
+          type: string
+          description: Command
+          example: EventSync.
+        EventSyncResponse:
+          $ref: '#/components/schemas/EventSyncResponse'
+    EventSyncResponse:
+      required:
+      - SessionValid
+      type: object
+      properties:
+        SessionValid:
+          type: boolean
+          description: Session validator.
+          example: true
+    FailureResponse:
+      required:
+      - Command
+      - FailEventSyncResponse
+      type: object
+      properties:
+        Command:
+          type: string
+          description: Command
+          example: EventSync.
+        FailEventSyncResponse:
+          $ref: '#/components/schemas/FailEventSyncResponse'
+    FailEventSyncResponse:
+      required:
+      - SessionValid
+      type: object
+      properties:
+        SessionValid:
+          type: boolean
+          description: Session validator.
+          example: false
+  examples:
+    EventRouteStart:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7064
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventDriverEnRoutePUStop:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7302
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventPUStopArrival:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7303
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventPUStopConfirmation:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7310
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                      StopDocument:
+                        DocumentName: DOE, JOHN
+                        DocumentType: 1
+                        DocumentExtType: png
+                        DocumentData: file:d08efda3-b227-4c7a-b790-aca10746f866
+                        DocumentDispositionType: 11
+                        SignedBy: DOE, JOHN
+                        Reference: d08efda3-b227-4c7a-b790-aca10746f866
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventPuSignatureConfirmation:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7305
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                      StopDocument:
+                        DocumentName: DOE, JOHN
+                        DocumentType: 1
+                        DocumentExtType: png
+                        DocumentData: file:d08efda3-b227-4c7a-b790-aca10746f866
+                        DocumentDispositionType: 11
+                        SignedBy: DOE, JOHN
+                        Reference: d08efda3-b227-4c7a-b790-aca10746f866
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventPUStopDeparture:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7304
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventDOStopArrival:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7313
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        VehicleId: 22357
+                        Mileage: 17074.1732
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventDOStopConfirmation:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7315
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                        VehicleId: 22357
+                      StopDocument:
+                        DocumentName: DOE, JOHN
+                        DocumentType: 1
+                        DocumentExtType: png
+                        DocumentData: file:d08efda3-b227-4c7a-b790-aca10746f866
+                        DocumentDispositionType: 11
+                        SignedBy: DOE, JOHN
+                        Reference: d08efda3-b227-4c7a-b790-aca10746f866
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventDOSignatureConfirmation:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7316
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                        VehicleId: 22357
+                      StopDocument:
+                        DocumentName: DOE, JOHN
+                        DocumentType: 1
+                        DocumentExtType: png
+                        DocumentData: file:d08efda3-b227-4c7a-b790-aca10746f866
+                        DocumentDispositionType: 11
+                        SignedBy: DOE, JOHN
+                        Reference: d08efda3-b227-4c7a-b790-aca10746f866
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
+    EventDOStopDeparture:
+      value:
+        Message:
+          Request:
+            RequestDate: 2022-05-24T06-31-19Z
+            Command: EventSync
+            CompanyCode: CHUATBP
+            EventSync:
+              EventGroups:
+                EventGroup:
+                  SessionToken: 92A0CTHHJQ7VC1S7TFTV
+                  Events:
+                    Event:
+                      EventCode: 7314
+                      LoadId: 628c7afe0242ef0001462250
+                      StopId: 628c7aef3cf0fd000756bacd_PU
+                      RouteId: 628c7afe0242ef0001462250
+                      InStopRegion: false
+                      EventTime: 2022-05-24T06-31-19Z
+                      Location:
+                        Latitude: 21.76528
+                        Longitude: 84.896895
+                        Accuracy: 9.704999923706055
+                        Altitude: 99.5640869140625
+                        Speed: 0.30273139476776123
+                        Course: 267.4988708496094
+                        RegionLatitude: 0
+                        RegionLongitude: 0
+                        RegionRadius: 0
+                        InRegion: false
+                        ReportedTime: 2022-05-24T06-31-19Z
+                        Mileage: 17074.1732
+                        VehicleId: 22357
+                      EventGuid: 7f323780-3994-4ec9-b55c-f5de1148f78a
